@@ -12,6 +12,39 @@
       />
       <link rel="stylesheet" href="style.css" />
       <style>
+         .settings-section {
+            background-color: #f4fdf8;
+            border-right: 5px solid #27ae60;
+            margin-bottom: 20px;
+         }
+         .settings-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+         }
+         .settings-controls input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 80px;
+            font-size: 16px;
+            text-align: center;
+         }
+         .generate-btn {
+            padding: 8px 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s;
+         }
+         .generate-btn:hover {
+            background-color: #219150;
+         }
          .days-container {
             max-height: 450px;
             overflow-y: auto;
@@ -51,7 +84,6 @@
             margin: 30px 0 15px 0;
             border-radius: 4px;
          }
-         /* تنسيق الشطب عند النقر على السطر */
          .strikethrough {
             text-decoration: line-through;
             opacity: 0.5;
@@ -73,8 +105,18 @@
       </header>
 
       <main>
+         <!-- قسم الإعدادات الجديد لتحديد عدد الأيام -->
+         <section class="card settings-section">
+            <h2>⚙️ إعدادات الإدخال</h2>
+            <div class="settings-controls">
+               <label for="days-count">عدد أيام العمليات المطلوبة (الخانات):</label>
+               <input type="number" id="days-count" min="1" max="31" value="1" />
+               <button id="generate-fields-btn" class="generate-btn">تحديث وتوليد الخانات</button>
+            </div>
+         </section>
+
          <section class="analyze-section card">
-            <h3>أدخل محتوى تقرير الفيزا (يمكن إدخال حتى 10 أيام):</h3>
+            <h3>أدخل محتوى تقرير الفيزا:</h3>
             <div id="visa-container" class="days-container"></div>
             <button id="analyze-btn">تحليل التقارير</button>
          </section>
@@ -107,7 +149,6 @@
             <div id="invoice-container" class="days-container"></div>
 
             <div class="options">
-               <!-- هذه الفلاتر أصبحت تتحكم بالظهور البصري فقط وليس بالمنطق الأساسي -->
                <label><input type="checkbox" id="showExact" checked /> المطابقات التامة</label>
                <label><input type="checkbox" id="showCardOnly" checked /> اختلاف في القيمة (نفس البطاقة)</label>
                <label><input type="checkbox" id="showAmountOnly" checked /> اختلاف في رقم البطاقة (نفس القيمة)</label>

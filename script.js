@@ -1,26 +1,48 @@
-/* script.js — نسخة عُمان الجديدة (تعدد الأيام + الفلاتر البصرية + Logs + الشطب) */
+/* script.js — نسخة عُمان الجديدة (توليد خانات ديناميكي + حفظ البيانات + فلاتر + Logs + شطب) */
 
-let merged =[];
-let branchInfo =[];
+let merged = [];
+let branchInfo = [];
+let currentDaysCount = 1; // المتغير الذي يحمل عدد الأيام الحالي
 
 // تحميل بيانات الفروع
 fetch("information.json")
    .then((r) => r.json())
    .then((data) => {
       branchInfo = data["ورقة1"] || [];
-      console.log("🟢 [INIT] Information.json loaded. Branches count:", branchInfo.length);
+      console.log(
+         "🟢 [INIT] Information.json loaded. Branches count:",
+         branchInfo.length,
+      );
    })
-   .catch((e) => console.error("❌ [ERROR] Failed to load information.json:", e));
+   .catch((e) =>
+      console.error("❌[ERROR] Failed to load information.json:", e),
+   );
 
 /* ======================
-   توليد الخانات الديناميكية لـ 10 أيام
+   توليد الخانات الديناميكية (مع الحفاظ على القيم المدخلة مسبقاً)
    ====================== */
-document.addEventListener("DOMContentLoaded", () => {
+function generateInputFields(count) {
    const visaContainer = document.getElementById("visa-container");
    const invoiceContainer = document.getElementById("invoice-container");
-   let visaHtml = "", invHtml = "";
 
-   for (let i = 1; i <= 10; i++) {
+   // 1. حفظ البيانات المكتوبة حالياً حتى لا تضيع عند التوليد
+   const savedVisa = [];
+   const savedInv = [];
+   for (let i = 1; i <= currentDaysCount; i++) {
+      savedVisa.push({
+         date: document.getElementById(`visa-date-${i}`)?.value || "",
+         text: document.getElementById(`visa-text-${i}`)?.value || "",
+      });
+      savedInv.push({
+         date: document.getElementById(`invoice-date-${i}`)?.value || "",
+         text: document.getElementById(`invoice-text-${i}`)?.value || "",
+      });
+   }
+
+   // 2. بناء الـ HTML الجديد
+   let visaHtml = "",
+      invHtml = "";
+   for (let i = 1; i <= count; i++) {
       visaHtml += `
       <div class="day-input-group">
          <label>📅 تاريخ الكشف (${i}): <input type="date" id="visa-date-${i}" /></label>
@@ -35,22 +57,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
    if (visaContainer) visaContainer.innerHTML = visaHtml;
    if (invoiceContainer) invoiceContainer.innerHTML = invHtml;
+
+   // 3. إعادة البيانات المحفوظة إلى الخانات الجديدة
+   const minCount = Math.min(count, currentDaysCount);
+   for (let i = 1; i <= minCount; i++) {
+      const vDateEl = document.getElementById(`visa-date-${i}`);
+      const vTextEl = document.getElementById(`visa-text-${i}`);
+      const iDateEl = document.getElementById(`invoice-date-${i}`);
+      const iTextEl = document.getElementById(`invoice-text-${i}`);
+
+      if (vDateEl) vDateEl.value = savedVisa[i - 1].date;
+      if (vTextEl) vTextEl.value = savedVisa[i - 1].text;
+      if (iDateEl) iDateEl.value = savedInv[i - 1].date;
+      if (iTextEl) iTextEl.value = savedInv[i - 1].text;
+   }
+
+   currentDaysCount = count; // تحديث العدد الكلي
+   console.log(`🟢 [UI] Generated ${count} input fields.`);
+}
+
+// توليد العدد الافتراضي عند التحميل
+document.addEventListener("DOMContentLoaded", () => {
+   generateInputFields(currentDaysCount);
+});
+
+// زر التحديث لتوليد عدد الخانات الجديد
+document.getElementById("generate-fields-btn").addEventListener("click", () => {
+   const countInput = document.getElementById("days-count").value;
+   const newCount = parseInt(countInput, 10);
+   if (isNaN(newCount) || newCount < 1) {
+      alert("الرجاء إدخال رقم صحيح أكبر من 0");
+      return;
+   }
+   generateInputFields(newCount);
 });
 
 /* ======================
-   زر التحليل الأساسي (يقرأ كافة الأيام)
+   زر التحليل الأساسي (يقرأ الخانات المتاحة)
    ====================== */
 document.getElementById("analyze-btn").addEventListener("click", () => {
-   console.groupCollapsed("🔵 [ACTION] Analyze Button Clicked");
-   
+   console.groupCollapsed("🔵[ACTION] Analyze Button Clicked");
+
    try {
-      let allParsedTerminals =[];
+      let allParsedTerminals = [];
       let hasData = false;
 
-      for (let i = 1; i <= 10; i++) {
+      // الدوران بحسب العدد المولد حالياً
+      for (let i = 1; i <= currentDaysCount; i++) {
          const textEl = document.getElementById(`visa-text-${i}`);
          const dateEl = document.getElementById(`visa-date-${i}`);
-         
+
          if (textEl && dateEl && textEl.value.trim() !== "") {
             hasData = true;
             const text = textEl.value;
@@ -63,9 +119,13 @@ document.getElementById("analyze-btn").addEventListener("click", () => {
                return;
             }
 
-            console.log(`⏳ [PARSING] Visa Report for Date: ${date} (Input ${i})`);
+            console.log(
+               `⏳ [PARSING] Visa Report for Date: ${date} (Input ${i})`,
+            );
             const raw = parseMerchantReportOman(text, date);
-            console.log(`✔️ [PARSED] Found ${raw.length} terminal blocks for ${date}`);
+            console.log(
+               `✔️ [PARSED] Found ${raw.length} terminal blocks for ${date}`,
+            );
             allParsedTerminals.push(...raw);
          }
       }
@@ -77,11 +137,16 @@ document.getElementById("analyze-btn").addEventListener("click", () => {
          return;
       }
 
-      console.log("📊 [DATA] All raw parsed terminals (unmerged):", allParsedTerminals);
+      console.log(
+         "📊 [DATA] All raw parsed terminals (unmerged):",
+         allParsedTerminals,
+      );
 
-      // دمج التيرمينالات (الآن ندمج مع أخذ التاريخ بعين الاعتبار)
       merged = mergeTerminals(allParsedTerminals);
-      console.log("🔗 [DATA] Merged terminals (Grouped by Terminal+Date):", merged);
+      console.log(
+         "🔗[DATA] Merged terminals (Grouped by Terminal+Date):",
+         merged,
+      );
 
       renderTotalsTable(merged);
 
@@ -90,27 +155,32 @@ document.getElementById("analyze-btn").addEventListener("click", () => {
          select.innerHTML = "";
          populateTerminalSelect(merged);
       }
-      
-      console.log("✅ [SUCCESS] Analysis completed successfully.");
+
+      console.log("✅[SUCCESS] Analysis completed successfully.");
    } catch (err) {
-      console.error("🔴 [FATAL ERROR] In Analyze handler:", err);
+      console.error("🔴[FATAL ERROR] In Analyze handler:", err);
       alert("خطأ غير متوقع — راجع الكونسول");
    }
    console.groupEnd();
 });
 
 /* ======================
-   دالة التحليل (مضاف إليها تمرير التاريخ للترمينال والعمليات)
+   دالة التحليل
    ====================== */
 function parseMerchantReportOman(text, reportDate) {
-   const terminals =[];
+   const terminals = [];
    const terminalBlocks = text.split(/Terminal ID:/).slice(1);
 
    terminalBlocks.forEach((block) => {
-      const lines = block.replace(/\r/g, "").split("\n").map((l) => l.trim()).filter(Boolean);
+      const lines = block
+         .replace(/\r/g, "")
+         .split("\n")
+         .map((l) => l.trim())
+         .filter(Boolean);
       const terminalId = lines[0].trim();
-      const transactions =[];
-      let totalGross = null, totalNet = null;
+      const transactions = [];
+      let totalGross = null,
+         totalNet = null;
 
       for (let i = 0; i < lines.length; i++) {
          const line = lines[i];
@@ -119,15 +189,15 @@ function parseMerchantReportOman(text, reportDate) {
 
          if (cardMatch && netMatch) {
             transactions.push({
-               terminal: terminalId, 
+               terminal: terminalId,
                cardNumber: cardMatch[1],
                amount: parseFloat(netMatch[1]),
-               date: reportDate
+               date: reportDate,
             });
          }
 
          if (/^Total\b/i.test(line) || /^Total\s*/i.test(line)) {
-            let collectedNumbers =[];
+            let collectedNumbers = [];
             let foundNetExplicit = null;
             for (let k = i; k < i + 7 && k < lines.length; k++) {
                const nums = lines[k].match(/(\d+\.\d+)/g);
@@ -138,7 +208,9 @@ function parseMerchantReportOman(text, reportDate) {
 
             if (collectedNumbers.length >= 2) {
                const gross = parseFloat(collectedNumbers[0]);
-               let net = foundNetExplicit ?? parseFloat(collectedNumbers[collectedNumbers.length - 1]);
+               let net =
+                  foundNetExplicit ??
+                  parseFloat(collectedNumbers[collectedNumbers.length - 1]);
                if (gross && net && net <= gross * 1.2 && net >= gross * 0.2) {
                   totalGross = gross;
                   totalNet = net;
@@ -151,7 +223,7 @@ function parseMerchantReportOman(text, reportDate) {
 
       terminals.push({
          terminalId,
-         date: reportDate, // التاريخ للترمينال ليتم فصل الإجماليات
+         date: reportDate,
          total: { gross: totalGross, net: totalNet },
          transactions,
       });
@@ -165,17 +237,16 @@ function parseMerchantReportOman(text, reportDate) {
    ====================== */
 function mergeTerminals(terminals) {
    const map = {};
-
    terminals.forEach((item) => {
       const id = item.terminalId || item.terminal || "UNKNOWN";
       const dt = item.date || "غير محدد";
-      const key = `${id}_${dt}`; // المفتاح المركب
-      
+      const key = `${id}_${dt}`;
+
       if (!map[key]) {
          map[key] = {
             terminalId: id,
             date: dt,
-            transactions:[],
+            transactions: [],
             total: { gross: 0, net: 0 },
          };
       }
@@ -185,16 +256,17 @@ function mergeTerminals(terminals) {
       }
 
       if (item.total) {
-         if (typeof item.total.gross === "number") map[key].total.gross += item.total.gross;
-         if (typeof item.total.net === "number") map[key].total.net += item.total.net;
+         if (typeof item.total.gross === "number")
+            map[key].total.gross += item.total.gross;
+         if (typeof item.total.net === "number")
+            map[key].total.net += item.total.net;
       }
    });
-
-   return Object.values(map).sort((a, b) => a.date.localeCompare(b.date)); // ترتيب حسب التاريخ
+   return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /* ======================
-   عرض جدول الإجماليات (يدعم عمود التاريخ)
+   عرض جدول الإجماليات
    ====================== */
 function renderTotalsTable(data) {
    const tbody = document.getElementById("totals-body");
@@ -204,13 +276,16 @@ function renderTotalsTable(data) {
    data.forEach((item) => {
       const id = item.terminalId;
       const dt = item.date;
-      const gross = item.total.gross != null ? item.total.gross.toFixed(3) : "-";
+      const gross =
+         item.total.gross != null ? item.total.gross.toFixed(3) : "-";
       const net = item.total.net != null ? item.total.net.toFixed(3) : "-";
-      const diff = item.total.gross != null && item.total.net != null
-            ? (item.total.gross - item.total.net).toFixed(3) : "-";
+      const diff =
+         item.total.gross != null && item.total.net != null
+            ? (item.total.gross - item.total.net).toFixed(3)
+            : "-";
 
       const branch = branchInfo.find(
-         (b) => String(b["Terminal ID"]).slice(-4) === String(id).slice(-4)
+         (b) => String(b["Terminal ID"]).slice(-4) === String(id).slice(-4),
       ) || { name: "غير معروف", "account id": "-", "bank account": "-" };
 
       const trMain = document.createElement("tr");
@@ -251,13 +326,12 @@ function renderTotalsTable(data) {
    });
 }
 
-/* تجهيز قائمة الترمينالات للمقارنة (تجميع بدون تكرار التواريخ) */
 function populateTerminalSelect(data) {
    const select = document.getElementById("terminal-select");
    if (!select) return;
-   
+
    const uniqueTerminals = new Set();
-   data.forEach(item => uniqueTerminals.add(item.terminalId));
+   data.forEach((item) => uniqueTerminals.add(item.terminalId));
 
    const allOpt = document.createElement("option");
    allOpt.value = "ALL";
@@ -265,9 +339,10 @@ function populateTerminalSelect(data) {
    select.appendChild(allOpt);
 
    Array.from(uniqueTerminals).forEach((id) => {
-      const branch = branchInfo.find(
-         (b) => String(b["Terminal ID"]).slice(-4) === String(id).slice(-4)
-      ) || {};
+      const branch =
+         branchInfo.find(
+            (b) => String(b["Terminal ID"]).slice(-4) === String(id).slice(-4),
+         ) || {};
       const text = branch.name ? `${branch.name} — (${id})` : id;
       const opt = document.createElement("option");
       opt.value = id;
@@ -280,12 +355,19 @@ function populateTerminalSelect(data) {
    قراءة الفواتير وتضمين التاريخ
    ====================== */
 function parseInvoices(text, invoiceDate) {
-   const lines = text.replace(/\r/g, "").split("\n").map((l) => l.trim());
-   const invoices =[];
-   const singleLineRegex = /^(\d{6,})\s+(.+?)\s+([\d.]+)\s*(?:[^\d\n]*?(?:رقم البطاقة|Card Number)\s*[:：]?\s*(\d{3,4}))?/i;
+   const lines = text
+      .replace(/\r/g, "")
+      .split("\n")
+      .map((l) => l.trim());
+   const invoices = [];
+   const singleLineRegex =
+      /^(\d{6,})\s+(.+?)\s+([\d.]+)\s*(?:[^\d\n]*?(?:رقم البطاقة|Card Number)\s*[:：]?\s*(\d{3,4}))?/i;
 
    for (let i = 0; i < lines.length; i++) {
-      let L = lines[i].replace(/[\u200F\u200E\u202A\u202B\u202C\u202D\u202E]/g, "");
+      let L = lines[i].replace(
+         /[\u200F\u200E\u202A\u202B\u202C\u202D\u202E]/g,
+         "",
+      );
       let m = L.match(singleLineRegex);
       if (m) {
          const invId = m[1];
@@ -295,11 +377,22 @@ function parseInvoices(text, invoiceDate) {
 
          if (!cardSearching) {
             for (let k = i + 1; k <= i + 3 && k < lines.length; k++) {
-               const m2 = lines[k].match(/(?:رقم البطاقة|Card Number)\s*[:：]?\s*(\d{3,4})/i);
-               if (m2) { cardSearching = m2[1]; break; }
+               const m2 = lines[k].match(
+                  /(?:رقم البطاقة|Card Number)\s*[:：]?\s*(\d{3,4})/i,
+               );
+               if (m2) {
+                  cardSearching = m2[1];
+                  break;
+               }
             }
          }
-         invoices.push({ invoiceId: invId, branchName, amount, cardNumber: cardSearching, date: invoiceDate });
+         invoices.push({
+            invoiceId: invId,
+            branchName,
+            amount,
+            cardNumber: cardSearching,
+            date: invoiceDate,
+         });
          continue;
       }
 
@@ -309,10 +402,21 @@ function parseInvoices(text, invoiceDate) {
          const amount = parseFloat(alt[2]);
          let cardFound = null;
          for (let k = i + 1; k <= i + 4 && k < lines.length; k++) {
-            const m2 = lines[k].match(/(?:رقم البطاقة|Card Number)\s*[:：]?\s*(\d{3,4})/i);
-            if (m2) { cardFound = m2[1]; break; }
+            const m2 = lines[k].match(
+               /(?:رقم البطاقة|Card Number)\s*[:：]?\s*(\d{3,4})/i,
+            );
+            if (m2) {
+               cardFound = m2[1];
+               break;
+            }
          }
-         invoices.push({ invoiceId: invId, branchName: null, amount, cardNumber: cardFound, date: invoiceDate });
+         invoices.push({
+            invoiceId: invId,
+            branchName: null,
+            amount,
+            cardNumber: cardFound,
+            date: invoiceDate,
+         });
       }
    }
 
@@ -321,7 +425,13 @@ function parseInvoices(text, invoiceDate) {
       if (allMatches) {
          allMatches.forEach((t) => {
             const parts = t.split(/\s+/);
-            invoices.push({ invoiceId: parts[0], branchName: null, amount: parseFloat(parts[1]), cardNumber: null, date: invoiceDate });
+            invoices.push({
+               invoiceId: parts[0],
+               branchName: null,
+               amount: parseFloat(parts[1]),
+               cardNumber: null,
+               date: invoiceDate,
+            });
          });
       }
    }
@@ -329,21 +439,31 @@ function parseInvoices(text, invoiceDate) {
 }
 
 /* ======================
-   المقارنة (لا يوجد أي تعديل على المنطق الأساسي)
+   المقارنة (لا يوجد أي تعديل على المنطق)
    ====================== */
 function compareInvoicesToRecords(invoices, records, options) {
-   const results =[];
+   const results = [];
    const usedInvoices = new Set();
    const usedRecords = new Set();
 
    if (options.showExact) {
       invoices.forEach((inv, i) => {
-         const matchIdx = records.findIndex((r, j) =>
-               !usedRecords.has(j) && r.cardNumber === inv.cardNumber && Math.abs(r.amount - inv.amount) < 0.001
+         const matchIdx = records.findIndex(
+            (r, j) =>
+               !usedRecords.has(j) &&
+               r.cardNumber === inv.cardNumber &&
+               Math.abs(r.amount - inv.amount) < 0.001,
          );
          if (matchIdx !== -1) {
-            results.push({ type: "مطابقة تامة ✅", invoiceIndex: i, recordIndex: matchIdx, invoice: inv, record: records[matchIdx] });
-            usedInvoices.add(i); usedRecords.add(matchIdx);
+            results.push({
+               type: "مطابقة تامة ✅",
+               invoiceIndex: i,
+               recordIndex: matchIdx,
+               invoice: inv,
+               record: records[matchIdx],
+            });
+            usedInvoices.add(i);
+            usedRecords.add(matchIdx);
          }
       });
    }
@@ -351,10 +471,19 @@ function compareInvoicesToRecords(invoices, records, options) {
    if (options.showCardOnly) {
       invoices.forEach((inv, i) => {
          if (usedInvoices.has(i)) return;
-         const matchIdx = records.findIndex((r, j) => !usedRecords.has(j) && r.cardNumber === inv.cardNumber);
+         const matchIdx = records.findIndex(
+            (r, j) => !usedRecords.has(j) && r.cardNumber === inv.cardNumber,
+         );
          if (matchIdx !== -1) {
-            results.push({ type: "اختلاف في القيمة ⚠️", invoiceIndex: i, recordIndex: matchIdx, invoice: inv, record: records[matchIdx] });
-            usedInvoices.add(i); usedRecords.add(matchIdx);
+            results.push({
+               type: "اختلاف في القيمة ⚠️",
+               invoiceIndex: i,
+               recordIndex: matchIdx,
+               invoice: inv,
+               record: records[matchIdx],
+            });
+            usedInvoices.add(i);
+            usedRecords.add(matchIdx);
          }
       });
    }
@@ -362,10 +491,20 @@ function compareInvoicesToRecords(invoices, records, options) {
    if (options.showAmountOnly) {
       invoices.forEach((inv, i) => {
          if (usedInvoices.has(i)) return;
-         const matchIdx = records.findIndex((r, j) => !usedRecords.has(j) && Math.abs(r.amount - inv.amount) < 0.001);
+         const matchIdx = records.findIndex(
+            (r, j) =>
+               !usedRecords.has(j) && Math.abs(r.amount - inv.amount) < 0.001,
+         );
          if (matchIdx !== -1) {
-            results.push({ type: "اختلاف في رقم البطاقة ⚠️", invoiceIndex: i, recordIndex: matchIdx, invoice: inv, record: records[matchIdx] });
-            usedInvoices.add(i); usedRecords.add(matchIdx);
+            results.push({
+               type: "اختلاف في رقم البطاقة ⚠️",
+               invoiceIndex: i,
+               recordIndex: matchIdx,
+               invoice: inv,
+               record: records[matchIdx],
+            });
+            usedInvoices.add(i);
+            usedRecords.add(matchIdx);
          }
       });
    }
@@ -373,19 +512,37 @@ function compareInvoicesToRecords(invoices, records, options) {
    if (options.showInvoiceOnly) {
       invoices.forEach((inv, i) => {
          if (usedInvoices.has(i)) return;
-         results.push({ type: "فاتورة دون كشف ❌", invoiceIndex: i, recordIndex: null, invoice: inv, record: null });
+         results.push({
+            type: "فاتورة دون كشف ❌",
+            invoiceIndex: i,
+            recordIndex: null,
+            invoice: inv,
+            record: null,
+         });
       });
    }
 
    if (options.showRecordOnly) {
       records.forEach((r, j) => {
          if (usedRecords.has(j)) return;
-         results.push({ type: "كشف دون فاتورة ⚠️", invoiceIndex: null, recordIndex: j, invoice: null, record: r });
+         results.push({
+            type: "كشف دون فاتورة ⚠️",
+            invoiceIndex: null,
+            recordIndex: j,
+            invoice: null,
+            record: r,
+         });
       });
    }
 
    results.sort((a, b) => {
-      const rank = { "مطابقة تامة ✅": 0, "اختلاف في القيمة ⚠️": 1, "اختلاف في رقم البطاقة ⚠️": 2, "فاتورة دون كشف ❌": 3, "كشف دون فاتورة ⚠️": 4 };
+      const rank = {
+         "مطابقة تامة ✅": 0,
+         "اختلاف في القيمة ⚠️": 1,
+         "اختلاف في رقم البطاقة ⚠️": 2,
+         "فاتورة دون كشف ❌": 3,
+         "كشف دون فاتورة ⚠️": 4,
+      };
       return (rank[a.type] || 9) - (rank[b.type] || 9);
    });
 
@@ -393,7 +550,7 @@ function compareInvoicesToRecords(invoices, records, options) {
 }
 
 /* ======================
-   زر المقارنة (تجميع ومقارنة وفلترة بصرية)
+   زر المقارنة (ديناميكي لعدد الخانات)
    ====================== */
 document.getElementById("compare-btn")?.addEventListener("click", () => {
    console.groupCollapsed("🔵 [ACTION] Compare Button Clicked");
@@ -406,9 +563,10 @@ document.getElementById("compare-btn")?.addEventListener("click", () => {
    }
 
    const terminalId = document.getElementById("terminal-select")?.value;
-   let allInvoices =[];
+   let allInvoices = [];
 
-   for (let i = 1; i <= 10; i++) {
+   // الدوران بحسب العدد المولد حالياً
+   for (let i = 1; i <= currentDaysCount; i++) {
       const textEl = document.getElementById(`invoice-text-${i}`);
       const dateEl = document.getElementById(`invoice-date-${i}`);
       if (textEl && dateEl && textEl.value.trim() !== "") {
@@ -424,54 +582,75 @@ document.getElementById("compare-btn")?.addEventListener("click", () => {
       }
    }
 
-   let allRecords =[];
+   let allRecords = [];
    if (terminalId === "ALL") {
       merged.forEach((t) => allRecords.push(...t.transactions));
    } else {
-      const terms = merged.filter((t) => String(t.terminalId) === String(terminalId));
-      if (!terms.length) { 
-         alert("لا يوجد سجلات لهذا التيرمينال"); 
+      const terms = merged.filter(
+         (t) => String(t.terminalId) === String(terminalId),
+      );
+      if (!terms.length) {
+         alert("لا يوجد سجلات لهذا التيرمينال");
          console.warn(`⚠️ [WARN] Terminal ${terminalId} not found in records.`);
          console.groupEnd();
-         return; 
+         return;
       }
-      terms.forEach(t => allRecords.push(...t.transactions));
+      terms.forEach((t) => allRecords.push(...t.transactions));
    }
 
-   console.log("📊 [COMPARE DATA] Total Invoices to Compare:", allInvoices.length);
-   console.log("📊 [COMPARE DATA] Total Records to Compare against:", allRecords.length);
+   console.log(
+      "📊[COMPARE DATA] Total Invoices to Compare:",
+      allInvoices.length,
+   );
+   console.log(
+      "📊[COMPARE DATA] Total Records to Compare against:",
+      allRecords.length,
+   );
 
-   // المنطق هنا دائماً يقارن كل شيء لعدم تخريب الدالة
    const alwaysTrueOptions = {
-      showExact: true, showCardOnly: true, showAmountOnly: true,
-      showInvoiceOnly: true, showRecordOnly: true
+      showExact: true,
+      showCardOnly: true,
+      showAmountOnly: true,
+      showInvoiceOnly: true,
+      showRecordOnly: true,
    };
 
    const uniqueDates = new Set();
-   allInvoices.forEach(inv => { if (inv.date) uniqueDates.add(inv.date); });
-   allRecords.forEach(rec => { if (rec.date) uniqueDates.add(rec.date); });
+   allInvoices.forEach((inv) => {
+      if (inv.date) uniqueDates.add(inv.date);
+   });
+   allRecords.forEach((rec) => {
+      if (rec.date) uniqueDates.add(rec.date);
+   });
 
-   let finalResults =[];
+   let finalResults = [];
 
-   uniqueDates.forEach(date => {
-      const dayInvoices = allInvoices.filter(inv => inv.date === date);
-      const dayRecords = allRecords.filter(rec => rec.date === date);
+   uniqueDates.forEach((date) => {
+      const dayInvoices = allInvoices.filter((inv) => inv.date === date);
+      const dayRecords = allRecords.filter((rec) => rec.date === date);
 
-      console.log(`🔄[COMPARING] For Date ${date} -> Invoices: ${dayInvoices.length}, Records: ${dayRecords.length}`);
-      const dayResults = compareInvoicesToRecords(dayInvoices, dayRecords, alwaysTrueOptions);
-      
-      dayResults.forEach(r => {
+      console.log(
+         `🔄[COMPARING] For Date ${date} -> Invoices: ${dayInvoices.length}, Records: ${dayRecords.length}`,
+      );
+      const dayResults = compareInvoicesToRecords(
+         dayInvoices,
+         dayRecords,
+         alwaysTrueOptions,
+      );
+
+      dayResults.forEach((r) => {
          r.compareDate = date;
          finalResults.push(r);
       });
    });
 
-   console.log("✅ [COMPARE RESULTS] Final merged comparison results:", finalResults);
+   console.log(
+      "✅ [COMPARE RESULTS] Final merged comparison results:",
+      finalResults,
+   );
    renderCompareResults(finalResults);
-   
-   // تفعيل الفلاتر البصرية بعد الرندر
-   applyVisualFilters();
 
+   applyVisualFilters();
    console.groupEnd();
 });
 
@@ -485,32 +664,50 @@ function applyVisualFilters() {
    const invoiceChecked = document.getElementById("showInvoiceOnly")?.checked;
    const recordChecked = document.getElementById("showRecordOnly")?.checked;
 
-   document.querySelectorAll('tr[data-type="exact"]').forEach(el => el.style.display = exactChecked ? "" : "none");
-   document.querySelectorAll('tr[data-type="card-diff"]').forEach(el => el.style.display = cardChecked ? "" : "none");
-   document.querySelectorAll('tr[data-type="amount-diff"]').forEach(el => el.style.display = amountChecked ? "" : "none");
-   document.querySelectorAll('tr[data-type="invoice-only"]').forEach(el => el.style.display = invoiceChecked ? "" : "none");
-   document.querySelectorAll('tr[data-type="record-only"]').forEach(el => el.style.display = recordChecked ? "" : "none");
+   document
+      .querySelectorAll('tr[data-type="exact"]')
+      .forEach((el) => (el.style.display = exactChecked ? "" : "none"));
+   document
+      .querySelectorAll('tr[data-type="card-diff"]')
+      .forEach((el) => (el.style.display = cardChecked ? "" : "none"));
+   document
+      .querySelectorAll('tr[data-type="amount-diff"]')
+      .forEach((el) => (el.style.display = amountChecked ? "" : "none"));
+   document
+      .querySelectorAll('tr[data-type="invoice-only"]')
+      .forEach((el) => (el.style.display = invoiceChecked ? "" : "none"));
+   document
+      .querySelectorAll('tr[data-type="record-only"]')
+      .forEach((el) => (el.style.display = recordChecked ? "" : "none"));
 }
-
-// إضافة مراقب (Listener) للتشيك بوكس لتعمل مباشرة فور النقر['showExact', 'showCardOnly', 'showAmountOnly', 'showInvoiceOnly', 'showRecordOnly'].forEach(id => {
-   document.getElementById(id)?.addEventListener('change', applyVisualFilters);
-
+[
+   "showExact",
+   "showCardOnly",
+   "showAmountOnly",
+   "showInvoiceOnly",
+   "showRecordOnly",
+].forEach((id) => {
+   document.getElementById(id)?.addEventListener("change", applyVisualFilters);
+});
 
 /* ======================
    تخزين الأخطاء وعرض النتائج
    ====================== */
 function loadErrors() {
-    try { return JSON.parse(localStorage.getItem("visaErrors") || "[]"); } 
-    catch { return[]; }
+   try {
+      return JSON.parse(localStorage.getItem("visaErrors") || "[]");
+   } catch {
+      return [];
+   }
 }
 function saveErrors(list) {
-    localStorage.setItem("visaErrors", JSON.stringify(list));
+   localStorage.setItem("visaErrors", JSON.stringify(list));
 }
 
 function renderCompareResults(results) {
    const container = document.getElementById("compare-results");
    if (!container) return;
-   container.innerHTML = ""; 
+   container.innerHTML = "";
 
    if (results.length === 0) {
       container.innerHTML = "<h3>لا توجد نتائج للمقارنة</h3>";
@@ -519,16 +716,18 @@ function renderCompareResults(results) {
 
    const currentErrors = loadErrors();
    const dateGroups = {};
-   
-   results.forEach(r => {
+
+   results.forEach((r) => {
       const d = r.compareDate || "غير محدد";
       if (!dateGroups[d]) dateGroups[d] = [];
       dateGroups[d].push(r);
    });
 
-   const sortedDates = Object.keys(dateGroups).sort((a, b) => a.localeCompare(b));
+   const sortedDates = Object.keys(dateGroups).sort((a, b) =>
+      a.localeCompare(b),
+   );
 
-   sortedDates.forEach(date => {
+   sortedDates.forEach((date) => {
       const dateWrapper = document.createElement("div");
       dateWrapper.className = "date-section-container";
       dateWrapper.style.marginBottom = "50px";
@@ -540,16 +739,18 @@ function renderCompareResults(results) {
 
       const dateResults = dateGroups[date];
       const groups = {};
-      const unknownKey = "UNMATCHED_INVOICES"; 
+      const unknownKey = "UNMATCHED_INVOICES";
 
       dateResults.forEach((r) => {
          let key = unknownKey;
          if (r.record && r.record.terminal) {
             key = r.record.terminal;
          } else if (r.invoice && r.invoice.branchName) {
-            const foundBranch = branchInfo.find(b => 
-               b.name && r.invoice.branchName && 
-               b.name.trim() === r.invoice.branchName.trim()
+            const foundBranch = branchInfo.find(
+               (b) =>
+                  b.name &&
+                  r.invoice.branchName &&
+                  b.name.trim() === r.invoice.branchName.trim(),
             );
             if (foundBranch && foundBranch["Terminal ID"]) {
                key = foundBranch["Terminal ID"];
@@ -560,27 +761,36 @@ function renderCompareResults(results) {
       });
 
       const keys = Object.keys(groups).sort((a, b) => {
-          if (a === unknownKey) return 1;
-          if (b === unknownKey) return -1;
-          return a.localeCompare(b);
+         if (a === unknownKey) return 1;
+         if (b === unknownKey) return -1;
+         return a.localeCompare(b);
       });
 
       keys.forEach((termId) => {
          const groupResults = groups[termId];
-         const branch = branchInfo.find(b => String(b["Terminal ID"]).slice(-4) === String(termId).slice(-4));
-         const branchName = branch ? branch.name : (termId === unknownKey ? "غير معروف" : "فرع غير معروف");
+         const branch = branchInfo.find(
+            (b) =>
+               String(b["Terminal ID"]).slice(-4) === String(termId).slice(-4),
+         );
+         const branchName = branch
+            ? branch.name
+            : termId === unknownKey
+              ? "غير معروف"
+              : "فرع غير معروف";
          const accountId = branch ? branch["account id"] : "";
 
-         let titleText = termId === unknownKey 
-             ? `⚠️ عمليات غير معروفة الفرع (${groupResults.length})` 
-             : `🏢 ${branchName} - (Terminal: ${termId}) - العدد: ${groupResults.length}`;
+         let titleText =
+            termId === unknownKey
+               ? `⚠️ عمليات غير معروفة الفرع (${groupResults.length})`
+               : `🏢 ${branchName} - (Terminal: ${termId}) - العدد: ${groupResults.length}`;
 
          const section = document.createElement("div");
          section.className = "terminal-section";
          section.style.marginBottom = "25px";
-         
+
          const header = document.createElement("h3");
-         header.style.backgroundColor = termId === unknownKey ? "#e74c3c" : "#2c3e50";
+         header.style.backgroundColor =
+            termId === unknownKey ? "#e74c3c" : "#2c3e50";
          header.style.color = "#fff";
          header.style.padding = "10px";
          header.textContent = titleText;
@@ -600,45 +810,61 @@ function renderCompareResults(results) {
                    </tr>
                </thead>
                <tbody>
-                   ${groupResults.map((r) => {
-                       let rowColor = r.type.includes("مطابقة") ? "#e8f5e9" : (r.type.includes("غير موجودة") || r.type.includes("دون") ? "#ffebee" : "#fff3e0");
-                       
-                       // استخراج نوع السطر من أجل فلتر الإخفاء البصري
-                       let rowDataType = "";
-                       if (r.type.includes("تامة")) rowDataType = "exact";
-                       else if (r.type.includes("القيمة")) rowDataType = "card-diff";
-                       else if (r.type.includes("رقم البطاقة")) rowDataType = "amount-diff";
-                       else if (r.type.includes("فاتورة دون")) rowDataType = "invoice-only";
-                       else if (r.type.includes("كشف دون")) rowDataType = "record-only";
+                   ${groupResults
+                      .map((r) => {
+                         let rowColor = r.type.includes("مطابقة")
+                            ? "#e8f5e9"
+                            : r.type.includes("غير موجودة") ||
+                                r.type.includes("دون")
+                              ? "#ffebee"
+                              : "#fff3e0";
 
-                       const invDate = r.compareDate;
-                       const invId = r.invoice?.invoiceId || "-";
-                       const cardNum = r.invoice?.cardNumber || r.record?.cardNumber || "-";
-                       const invAmt = r.invoice?.amount || 0;
-                       const recAmt = r.record?.amount || 0;
-                       const bName = branchName; 
-                       const bAcc = accountId;
+                         let rowDataType = "";
+                         if (r.type.includes("تامة")) rowDataType = "exact";
+                         else if (r.type.includes("القيمة"))
+                            rowDataType = "card-diff";
+                         else if (r.type.includes("رقم البطاقة"))
+                            rowDataType = "amount-diff";
+                         else if (r.type.includes("فاتورة دون"))
+                            rowDataType = "invoice-only";
+                         else if (r.type.includes("كشف دون"))
+                            rowDataType = "record-only";
 
-                       const isAlreadySaved = currentErrors.some(e => e.invoiceId === invId && e.cardNumber === cardNum && e.date === invDate);
+                         const invDate = r.compareDate;
+                         const invId = r.invoice?.invoiceId || "-";
+                         const cardNum =
+                            r.invoice?.cardNumber ||
+                            r.record?.cardNumber ||
+                            "-";
+                         const invAmt = r.invoice?.amount || 0;
+                         const recAmt = r.record?.amount || 0;
+                         const bName = branchName;
+                         const bAcc = accountId;
 
-                       let btnHTML = "";
-                       if (!r.type.includes("مطابقة")) {
-                           if (isAlreadySaved) {
-                                btnHTML = `<button disabled style="background:#95a5a6; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:not-allowed;">تم الترحيل ✅</button>`;
-                           } else {
-                                btnHTML = `
+                         const isAlreadySaved = currentErrors.some(
+                            (e) =>
+                               e.invoiceId === invId &&
+                               e.cardNumber === cardNum &&
+                               e.date === invDate,
+                         );
+
+                         let btnHTML = "";
+                         if (!r.type.includes("مطابقة")) {
+                            if (isAlreadySaved) {
+                               btnHTML = `<button disabled style="background:#95a5a6; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:not-allowed;">تم الترحيل ✅</button>`;
+                            } else {
+                               btnHTML = `
                                    <button onclick='addErrorFromRow(event, this, "${invId}", "${cardNum}", ${invAmt}, ${recAmt}, "${bName}", "${bAcc}", "${invDate}")' 
                                            style="background:#e67e22; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:3px;">
                                        ترحيل للأخطاء
                                    </button>
                                 `;
-                           }
-                       } else {
-                           btnHTML = `<span style="color:green; font-weight:bold;">✅</span>`;
-                       }
+                            }
+                         } else {
+                            btnHTML = `<span style="color:green; font-weight:bold;">✅</span>`;
+                         }
 
-                       // إضافة onClick للسطر كاملاً لتطبيق الشطب، مع استثناء زر الترحيل
-                       return `
+                         return `
                        <tr data-type="${rowDataType}" style="background-color: ${rowColor};" onclick="this.classList.toggle('strikethrough')">
                            <td style="font-weight:bold;">${invDate}</td>
                            <td>${r.type}</td>
@@ -649,7 +875,8 @@ function renderCompareResults(results) {
                            <td style="text-align:center;" onclick="event.stopPropagation();">${btnHTML}</td>
                        </tr>
                        `;
-                   }).join("")}
+                      })
+                      .join("")}
                </tbody>
            </table>
          `;
@@ -662,38 +889,56 @@ function renderCompareResults(results) {
    });
 }
 
-// دالة الترحيل المحدثة لمنع الشطب عند الضغط على الزر (عبر استلام event)
-window.addErrorFromRow = function(event, btnElement, invId, cardNum, invAmt, recAmt, bName, bAcc, errDate) {
-    event.stopPropagation(); // يمنع النقر من الانتقال للسطر وتطبيق الشطب
+window.addErrorFromRow = function (
+   event,
+   btnElement,
+   invId,
+   cardNum,
+   invAmt,
+   recAmt,
+   bName,
+   bAcc,
+   errDate,
+) {
+   event.stopPropagation();
 
-    const list = loadErrors();
-    const exists = list.find(e => e.invoiceId === invId && e.cardNumber === cardNum && e.date === errDate);
-    
-    if (exists) {
-        alert("هذا الخطأ مسجل بالفعل في هذا التاريخ!");
-        btnElement.innerText = "تم الترحيل ✅";
-        btnElement.style.background = "#95a5a6";
-        btnElement.style.cursor = "not-allowed";
-        btnElement.disabled = true;
-        return;
-    }
+   const list = loadErrors();
+   const exists = list.find(
+      (e) =>
+         e.invoiceId === invId &&
+         e.cardNumber === cardNum &&
+         e.date === errDate,
+   );
 
-    list.push({
-        date: errDate, 
-        invoiceId: invId,
-        cardNumber: cardNum,
-        invoiceValue: invAmt,
-        reportValue: recAmt,
-        branchName: bName,
-        branchAccountId: bAcc,
-        errorType: 0
-    });
-    saveErrors(list);
+   if (exists) {
+      alert("هذا الخطأ مسجل بالفعل في هذا التاريخ!");
+      btnElement.innerText = "تم الترحيل ✅";
+      btnElement.style.background = "#95a5a6";
+      btnElement.style.cursor = "not-allowed";
+      btnElement.disabled = true;
+      return;
+   }
 
-    console.log("💾[SAVE] Error saved to LocalStorage:", { invId, cardNum, errDate });
+   list.push({
+      date: errDate,
+      invoiceId: invId,
+      cardNumber: cardNum,
+      invoiceValue: invAmt,
+      reportValue: recAmt,
+      branchName: bName,
+      branchAccountId: bAcc,
+      errorType: 0,
+   });
+   saveErrors(list);
 
-    btnElement.innerText = "تم الترحيل ✅";
-    btnElement.style.background = "#95a5a6";
-    btnElement.style.cursor = "not-allowed";
-    btnElement.disabled = true;
+   console.log("💾[SAVE] Error saved to LocalStorage:", {
+      invId,
+      cardNum,
+      errDate,
+   });
+
+   btnElement.innerText = "تم الترحيل ✅";
+   btnElement.style.background = "#95a5a6";
+   btnElement.style.cursor = "not-allowed";
+   btnElement.disabled = true;
 };
