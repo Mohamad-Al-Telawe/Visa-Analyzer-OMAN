@@ -1,0 +1,136 @@
+{
+  "ورقة1": [
+    {
+      "Terminal ID": "20035149",
+      "name": "City Centre Qurum",
+      "account id": 133223,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "20336858",
+      "name": "Nazwa",
+      "account id": 133212,
+      "bank account": "13216"
+    },
+    {
+      "Terminal ID": "01340264",
+      "name": "Golden Dragon Mall (Br2)",
+      "account id": 133202,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "01340272",
+      "name": "Al saada BR",
+      "account id": 133211,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "01340280",
+      "name": "AL SEEB (Br2)",
+      "account id": 133204,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "01340298",
+      "name": "Souhar (Br2)",
+      "account id": 133206,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "01399377",
+      "name": "Alkhawd",
+      "account id": 133213,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "01450618",
+      "name": "Elheil (Br2)",
+      "account id": 133215,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "20045522",
+      "name": "Avenues Mall",
+      "account id": 133218,
+      "bank account": "13216"
+    },
+    {
+      "Terminal ID": "20082624",
+      "name": "City Centre Suhar",
+      "account id": 133221,
+      "bank account": "13216"
+    },
+    {
+      "Terminal ID": "20082632",
+      "name": "Mall of oman",
+      "account id": 133222,
+      "bank account": "13216"
+    },
+    {
+      "Terminal ID": "20340256",
+      "name": "Elheil (Br1)",
+      "account id": 133207,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "01336866",
+      "name": "Souhar (Br1)",
+      "account id": 133205,
+      "bank account": "13216"
+    },
+    {
+      "Terminal ID": "01336874",
+      "name": "Golden Dragon Mall (Br1)",
+      "account id": 133201,
+      "bank account": "13216"
+    },
+    {
+      "Terminal ID": "01336882",
+      "name": "Alsalm St BR",
+      "account id": 133210,
+      "bank account": "13216"
+    },
+    {
+      "Terminal ID": "20017988",
+      "name": "City Center Al Mawaleh",
+      "account id": 133224,
+      "bank account": "13217"
+    },
+    {
+      "Terminal ID": "01663954",
+      "name": "Muscat Mall",
+      "account id": 133216,
+      "bank account": "13216"
+    },
+    {
+      "Terminal ID": "20080727",
+      "name": "Al SEEB (Br3)",
+      "account id": 133217,
+      "bank account": "13219"
+    },
+    {
+      "Terminal ID": "20080735",
+      "name": "Al amerat",
+      "account id": 133219,
+      "bank account": "13219"
+    },
+    {
+      "Terminal ID": "20080743",
+      "name": "Golden Dragon Mall (Br3)",
+      "account id": 133220,
+      "bank account": "13219"
+    },
+    {
+      "Terminal ID": "20080750",
+      "name": "Sur (Br1)",
+      "account id": 133209,
+      "bank account": "13219"
+    },
+    {
+      "Terminal ID": "20087237",
+      "name": "Sur City Center (Mirano)",
+      "account id": 133225,
+      "bank account": "13217"
+    }
+  ]
+}

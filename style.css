@@ -1,0 +1,210 @@
+body {
+   /* font-family: "Tajawal", sans-serif; */
+   font-family: "Almarai", sans-serif;
+   font-optical-sizing: auto;
+   font-style: normal;
+
+   background-color: #f4f6f8;
+   color: #222;
+   margin: 0;
+   padding: 0;
+   line-height: 1.6;
+   direction: rtl;
+}
+
+header,
+footer {
+   text-align: center;
+   background: #004085;
+   color: white;
+   padding: 15px 0;
+}
+
+h1 {
+   margin: 0;
+   font-size: 1.8em;
+}
+
+main {
+   padding: 20px;
+   max-width: 1100px;
+   margin: auto;
+}
+
+.card {
+   background: white;
+   border-radius: 12px;
+   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+   margin-bottom: 30px;
+   padding: 20px;
+}
+
+textarea {
+   width: 100%;
+   font-family: monospace;
+   border: 1px solid #ccc;
+   border-radius: 8px;
+   padding: 10px;
+   resize: vertical;
+}
+
+button {
+   background-color: #007bff;
+   color: white;
+   border: none;
+   padding: 10px 18px;
+   border-radius: 8px;
+   cursor: pointer;
+   transition: 0.25s;
+   font-size: 15px;
+}
+
+button:hover {
+   background-color: #0056b3;
+   transform: translateY(-2px);
+}
+
+table {
+   border-collapse: collapse;
+   width: 100%;
+   text-align: center;
+   margin-top: 10px;
+}
+
+th {
+   background-color: #007bff;
+   color: white;
+   padding: 10px;
+}
+
+td {
+   border: 1px solid #ddd;
+   padding: 8px;
+   background-color: #fff;
+}
+
+tr:nth-child(even) td {
+   background-color: #f8f9fa;
+}
+
+/* تفاصيل منسدلة */
+.details-row {
+   background: #eef5ff;
+}
+
+.inner-table {
+   width: 95%;
+   margin: 10px auto;
+   border-radius: 8px;
+   overflow: hidden;
+}
+
+.inner-table td {
+   padding: 8px;
+}
+
+/* أيقونة التبديل */
+.toggle-btn {
+   cursor: pointer;
+   background: none;
+   border: none;
+   font-size: 18px;
+   transition: transform 0.2s;
+}
+
+.toggle-btn.rotate {
+   transform: rotate(180deg);
+}
+
+/* جدول مقارنة الفواتير */
+.compare-table th {
+   background: #006699;
+   color: white;
+   padding: 8px;
+}
+
+.compare-table td {
+   padding: 6px;
+   border: 1px solid #ddd;
+}
+
+/* زر السند المنسدل داخل الجدول */
+.voucher-btn {
+   background: none;
+   border: 1px solid #ccc;
+   padding: 6px 10px;
+   border-radius: 6px;
+   cursor: pointer;
+   background-color: #fff;
+}
+
+.voucher-panel {
+   display: none;
+   margin-top: 8px;
+   background: #fff;
+   border: 1px solid #e0e7ff;
+   padding: 8px;
+   border-radius: 8px;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* مرئي مع حركة بسيطة */
+.voucher-panel.open {
+   display: block;
+   animation: slideDown 220ms ease;
+}
+
+@keyframes slideDown {
+   from {
+      opacity: 0;
+      transform: translateY(-6px);
+   }
+   to {
+      opacity: 1;
+      transform: translateY(0);
+   }
+}
+
+/* نتائج المقارنة */
+.results {
+   margin-top: 15px;
+}
+.res-item {
+   padding: 6px 8px;
+   border-bottom: 1px dashed #eee;
+}
+
+/* errors styles */
+.error-group {
+   margin-bottom: 40px;
+   padding: 15px;
+   border: 1px solid #ccc;
+   border-radius: 8px;
+   background: #fafafa;
+}
+
+.whatsapp-btn {
+   background: #25d366;
+   color: #fff;
+   padding: 8px 14px;
+   border-radius: 8px;
+   text-decoration: none;
+   font-weight: bold;
+   margin: 10px 0;
+   display: inline-block;
+}
+.whatsapp-btn:hover {
+   opacity: 0.9;
+}
+
+table {
+   width: 100%;
+   border-collapse: collapse;
+   margin-top: 10px;
+}
+th,
+td {
+   border: 1px solid #ccc;
+   padding: 8px;
+   text-align: center;
+}

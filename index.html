@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>تقارير نقاط البيع</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link
+         href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400..700&display=swap"
+         rel="stylesheet"
+      />
+      <link rel="stylesheet" href="style.css" />
+      <style>
+         .days-container {
+            max-height: 450px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fafafa;
+            margin-bottom: 15px;
+         }
+         .day-input-group {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed #ddd;
+         }
+         .day-input-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+         }
+         .day-input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+         }
+         .day-input-group input[type="date"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+         }
+         .date-section-header {
+            background-color: #e8f4f8;
+            color: #2980b9;
+            padding: 12px;
+            border-right: 5px solid #2980b9;
+            margin: 30px 0 15px 0;
+            border-radius: 4px;
+         }
+         /* تنسيق الشطب عند النقر على السطر */
+         .strikethrough {
+            text-decoration: line-through;
+            opacity: 0.5;
+            background-color: #dcdcdc !important;
+            transition: all 0.2s ease-in-out;
+         }
+         .results-table tr {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+         }
+         .results-table tr:hover {
+            filter: brightness(0.95);
+         }
+      </style>
+   </head>
+   <body>
+      <header>
+         <h1>📊 تقارير وإجماليات نقاط البيع</h1>
+      </header>
+
+      <main>
+         <section class="analyze-section card">
+            <h3>أدخل محتوى تقرير الفيزا (يمكن إدخال حتى 10 أيام):</h3>
+            <div id="visa-container" class="days-container"></div>
+            <button id="analyze-btn">تحليل التقارير</button>
+         </section>
+
+         <section class="card">
+            <h2>🏦 إجماليات الفروع</h2>
+            <table id="summary-table">
+               <thead>
+                  <tr>
+                     <th>التاريخ</th>
+                     <th>اسم الفرع</th>
+                     <th>Terminal ID</th>
+                     <th>إجمالي Gross</th>
+                     <th>إجمالي Net</th>
+                     <th>تفاصيل</th>
+                  </tr>
+               </thead>
+               <tbody id="totals-body"></tbody>
+            </table>
+         </section>
+
+         <section class="card">
+            <h2>🔍 مقارنة الفواتير</h2>
+            <div class="compare-controls">
+               <label>اختر Terminal:</label>
+               <select id="terminal-select"></select>
+            </div>
+
+            <p style="margin-bottom: 10px; font-weight: bold;">أدخل الفواتير لكل يوم (الصيغة المطلوبة: `202511185 9 رقم البطاقة : 8081`):</p>
+            <div id="invoice-container" class="days-container"></div>
+
+            <div class="options">
+               <!-- هذه الفلاتر أصبحت تتحكم بالظهور البصري فقط وليس بالمنطق الأساسي -->
+               <label><input type="checkbox" id="showExact" checked /> المطابقات التامة</label>
+               <label><input type="checkbox" id="showCardOnly" checked /> اختلاف في القيمة (نفس البطاقة)</label>
+               <label><input type="checkbox" id="showAmountOnly" checked /> اختلاف في رقم البطاقة (نفس القيمة)</label>
+               <label><input type="checkbox" id="showInvoiceOnly" checked /> فواتير غير مطابقة</label>
+               <label><input type="checkbox" id="showRecordOnly" checked /> سجلات غير مطابقة</label>
+            </div>
+
+            <button id="compare-btn" class="compare-btn">قارن الآن</button>
+
+            <div id="compare-results" class="results">
+               <!-- جداول النتائج تُبنى ديناميكياً -->
+            </div>
+         </section>
+      </main>
+
+      <footer>
+         <p>✨ تصميم وتحليل بواسطة محمد التلاوي - مهندس معلوماتية - ✨</p>
+      </footer>
+
+      <script src="errors_feature_code.js"></script>
+      <script src="script.js"></script>
+   </body>
+</html>
