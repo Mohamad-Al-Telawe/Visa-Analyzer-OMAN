@@ -836,6 +836,12 @@ function renderCompareResults(results) {
                             r.invoice?.cardNumber ||
                             r.record?.cardNumber ||
                             "-";
+                         // تحديد شكل العرض لرقم البطاقة
+                         let displayCardNum = cardNum;
+                         if (r.type.includes("اختلاف في رقم البطاقة")) {
+                            // نستخدم dir="ltr" لكي يظهر الرقم الأول (الفاتورة) ثم سهم يتجه لرقم الكشف بشكل صحيح
+                            displayCardNum = `<span dir="ltr" style="display:inline-block; font-weight:bold;">${r.invoice?.cardNumber || "-"} &rarr; ${r.record?.cardNumber || "-"}</span>`;
+                         }
                          const invAmt = r.invoice?.amount || 0;
                          const recAmt = r.record?.amount || 0;
                          const bName = branchName;
@@ -869,7 +875,7 @@ function renderCompareResults(results) {
                            <td style="font-weight:bold;">${invDate}</td>
                            <td>${r.type}</td>
                            <td>${invId}</td>
-                           <td>${cardNum}</td>
+                           <td>${displayCardNum}</td>
                            <td>${invAmt}</td>
                            <td>${recAmt}</td>
                            <td style="text-align:center;" onclick="event.stopPropagation();">${btnHTML}</td>
