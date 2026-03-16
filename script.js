@@ -840,7 +840,7 @@ function renderCompareResults(results) {
                          let displayCardNum = cardNum;
                          if (r.type.includes("اختلاف في رقم البطاقة")) {
                             // نستخدم dir="ltr" لكي يظهر الرقم الأول (الفاتورة) ثم سهم يتجه لرقم الكشف بشكل صحيح
-                            displayCardNum = `<span dir="ltr" style="display:inline-block; font-weight:bold;">${r.invoice?.cardNumber || "-"} &rarr; ${r.record?.cardNumber || "-"}</span>`;
+                            displayCardNum = `<span dir="ltr" style="display:inline-block;">${r.invoice?.cardNumber || "-"} &rarr; ${r.record?.cardNumber || "-"}</span>`;
                          }
                          const invAmt = r.invoice?.amount || 0;
                          const recAmt = r.record?.amount || 0;
