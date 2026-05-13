@@ -131,6 +131,12 @@
       "name": "Sur City Center (Mirano)",
       "account id": 133225,
       "bank account": "13217"
+    },
+    {
+      "Terminal ID": "20046122",
+      "name": "Al-Musannah State BR",
+      "account id": 133226,
+      "bank account": "13219"
     }
   ]
 }
