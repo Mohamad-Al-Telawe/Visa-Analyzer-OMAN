@@ -143,6 +143,12 @@
       "name": "GRAND MALL SALALAH",
       "account id": 133227,
       "bank account": "13219"
+    },
+    {
+      "Terminal ID": "20066391",
+      "name": "EABRI BR",
+      "account id": 13229,
+      "bank account": "13216"
     }
   ]
 }
