@@ -149,6 +149,12 @@
       "name": "IBRI BR",
       "account id": 133229,
       "bank account": "13216"
+    },
+    {
+      "Terminal ID": "20066466",
+      "name": "Mall of oman (MIRANO)",
+      "account id": 133230,
+      "bank account": "13217"
     }
   ]
 }
