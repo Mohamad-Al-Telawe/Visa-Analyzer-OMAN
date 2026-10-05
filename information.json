@@ -155,6 +155,12 @@
       "name": "Mall of oman (MIRANO)",
       "account id": 133230,
       "bank account": "13217"
+    },
+    {
+      "Terminal ID": "20451921",
+      "name": "Elheil (B3)",
+      "account id": 133231,
+      "bank account": "13216"
     }
   ]
 }
